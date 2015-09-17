@@ -9,8 +9,13 @@ import (
     "net/http"
     "time"
     "html/template"
+    "gopkg.in/mgo.v2/bson"
+    "gopkg.in/mgo.v2"
 )
 
+type Photo struct {
+	name      string
+}
 
 // upload logic
 func upload(w http.ResponseWriter, r *http.Request) {
@@ -46,6 +51,21 @@ func upload(w http.ResponseWriter, r *http.Request) {
     }
 }
 
+func view(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintf(w, "This is where the pictures are shown")
+    
+    session, err := mgo.Dial("localhost")
+    if err != nil {
+       fmt.Println(err)
+       return
+    }
+    c := session.DB("photos").C("photoList")
+
+    var results []Photo
+
+    err = c.Find(bson.M{"name": name}).All(&results)
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 }
@@ -53,7 +73,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func main() {
     fmt.Printf("Server started\n")
     http.HandleFunc("/upload", upload)
-    http.HandleFunc("/", handler)
+    http.HandleFunc("/view", view)
     http.ListenAndServe(":8080", nil)
 }
 
